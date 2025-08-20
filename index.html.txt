@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Чат</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            height: 100vh;
+            background-color: #f0f2f5;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 100%;
+            margin: 0 auto;
+        }
+
+        .chat-header {
+            background-color: #25D366;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            z-index: 10;
+        }
+
+        .chat-header h1 {
+            font-size: 1.2rem;
+            font-weight: 500;
+        }
+
+        .status {
+            margin-left: 10px;
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="%23f0f2f5"/><path d="M0 0L100 100M100 0L0 100" stroke="%23e0e0e0" stroke-width="0.5"/></svg>');
+        }
+
+        .message {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            font-size: 0.95rem;
+            line-height: 1.4;
+            position: relative;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.sent {
+            align-self: flex-end;
+            background-color: #25D366;
+            color: white;
+            border-bottom-right-radius: 5px;
+        }
+
+        .message.received {
+            align-self: flex-start;
+            background-color: #ffffff;
+            color: #000000;
+            border-bottom-left-radius: 5px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .message-info {
+            font-size: 0.75rem;
+            opacity: 0.7;
+            margin-top: 5px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .message.sent .message-info {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .message.received .message-info {
+            color: rgba(0, 0, 0, 0.5);
+        }
+
+        .input-container {
+            display: flex;
+            padding: 15px;
+            background-color: #ffffff;
+            border-top: 1px solid #e0e0e0;
+            gap: 10px;
+        }
+
+        .message-input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 24px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .message-input:focus {
+            border-color: #25D366;
+        }
+
+        .send-button {
+            background-color: #25D366;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s;
+        }
+
+        .send-button:hover {
+            background-color: #128C7E;
+        }
+
+        .send-button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        .send-icon {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #25D366;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1000;
+            transform: translateX(200%);
+            transition: transform 0.3s ease;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        /* Мобильные стили */
+        @media (max-width: 768px) {
+            .chat-header h1 {
+                font-size: 1.1rem;
+            }
+
+            .message {
+                max-width: 85%;
+            }
+
+            .message-input {
+                padding: 10px 12px;
+                font-size: 0.95rem;
+            }
+
+            .send-button {
+                width: 44px;
+                height: 44px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .chat-header {
+                padding: 12px 15px;
+            }
+
+            .chat-messages {
+                padding: 15px 10px;
+            }
+
+            .message {
+                max-width: 90%;
+                padding: 10px 14px;
+                font-size: 0.9rem;
+            }
+
+            .input-container {
+                padding: 12px 10px;
+            }
+
+            .message-input {
+                padding: 10px 12px;
+            }
+        }
+
+        /* Стили для скроллбара */
+        .chat-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background-color: rgba(0, 0, 0, 0.1);
+            border-radius: 3px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb:hover {
+            background-color: rgba(0, 0, 0, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <header class="chat-header">
+            <h1>Чат</h1>
+            <div class="status" id="status">Подключение...</div>
+        </header>
+        
+        <div class="chat-messages" id="chatMessages">
+            <!-- Сообщения будут добавляться сюда -->
+        </div>
+        
+        <div class="input-container">
+            <input 
+                type="text" 
+                class="message-input" 
+                id="messageInput" 
+                placeholder="Введите сообщение..."
+                autocomplete="off"
+            >
+            <button class="send-button" id="sendButton" disabled>
+                <svg class="send-icon" viewBox="0 0 24 24">
+                    <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <div class="notification" id="notification"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageInput = document.getElementById('messageInput');
+            const sendButton = document.getElementById('sendButton');
+            const statusElement = document.getElementById('status');
+            const notificationElement = document.getElementById('notification');
+
+            let socket = null;
+            let userId = null;
+            let isConnected = false;
+
+            // Генерация уникального ID пользователя
+            function generateUserId() {
+                return 'user_' + Math.random().toString(36).substr(2, 9);
+            }
+
+            userId = generateUserId();
+
+            // Показ уведомления
+            function showNotification(message) {
+                notificationElement.textContent = message;
+                notificationElement.classList.add('show');
+                setTimeout(() => {
+                    notificationElement.classList.remove('show');
+                }, 3000);
+            }
+
+            // Функция для получения текущего времени
+            function getCurrentTime() {
+                const now = new Date();
+                return `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+            }
+
+            // Функция для добавления сообщения в чат
+            function addMessage(messageData) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${messageData.userId === userId ? 'sent' : 'received'}`;
+                
+                const infoDiv = document.createElement('div');
+                infoDiv.className = 'message-info';
+                infoDiv.innerHTML = `
+                    <span>${messageData.userId === userId ? 'Вы' : 'Пользователь'}</span>
+                    <span>${messageData.time}</span>
+                `;
+                
+                messageDiv.innerHTML = messageData.text;
+                messageDiv.appendChild(infoDiv);
+                
+                chatMessages.appendChild(messageDiv);
+                
+                // Прокручиваем вниз
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+
+            // Функция для отправки сообщения
+            function sendMessage() {
+                const text = messageInput.value.trim();
+                if (text && isConnected) {
+                    const messageData = {
+                        userId: userId,
+                        text: text,
+                        time: getCurrentTime()
+                    };
+                    
+                    socket.send(JSON.stringify(messageData));
+                    messageInput.value = '';
+                    sendButton.disabled = true;
+                }
+            }
+
+            // Подключение к WebSocket серверу
+            function connectWebSocket() {
+                try {
+                    // В реальной реализации замените на адрес вашего сервера
+                    socket = new WebSocket('ws://localhost:8080');
+                    
+                    socket.onopen = function(event) {
+                        console.log('Соединение установлено');
+                        isConnected = true;
+                        statusElement.textContent = 'Онлайн';
+                        statusElement.style.color = '#fff';
+                        showNotification('Подключено к чату');
+                    };
+                    
+                    socket.onmessage = function(event) {
+                        const messageData = JSON.parse(event.data);
+                        addMessage(messageData);
+                    };
+                    
+                    socket.onclose = function(event) {
+                        console.log('Соединение закрыто');
+                        isConnected = false;
+                        statusElement.textContent = 'Отключено';
+                        statusElement.style.color = '#ff6b6b';
+                        showNotification('Потеряно соединение с сервером');
+                        
+                        // Попытка переподключения через 3 секунды
+                        setTimeout(connectWebSocket, 3000);
+                    };
+                    
+                    socket.onerror = function(error) {
+                        console.error('Ошибка WebSocket:', error);
+                        showNotification('Ошибка подключения');
+                    };
+                } catch (error) {
+                    console.error('Ошибка подключения:', error);
+                    showNotification('Не удалось подключиться к серверу');
+                }
+            }
+
+            // Обработчик ввода текста
+            messageInput.addEventListener('input', function() {
+                sendButton.disabled = !this.value.trim() || !isConnected;
+            });
+
+            // Обработчик отправки по кнопке
+            sendButton.addEventListener('click', sendMessage);
+
+            // Обработчик отправки по Enter
+            messageInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+
+            // Начальное подключение
+            connectWebSocket();
+        });
+    </script>
+</body>
+</html>
